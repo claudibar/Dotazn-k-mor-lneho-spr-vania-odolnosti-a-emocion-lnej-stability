@@ -2,1381 +2,825 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dotazník morálneho správania</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dotazník morálneho správania, odolnosti a emocionálnej stability</title>
     <style>
-        body { margin: 0; padding: 0; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        h3 {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            color: #4b5563;
+        }
+        
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2563eb;
+        }
+        
+        button:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+        }
+        
+        button.btn-green {
+            background-color: #10b981;
+        }
+        
+        button.btn-green:hover {
+            background-color: #059669;
+        }
+        
+        button.btn-gray {
+            background-color: #6b7280;
+        }
+        
+        button.btn-gray:hover {
+            background-color: #4b5563;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        
+        .question {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .scale-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .scale-btn {
+            min-width: 45px;
+            padding: 10px;
+            background: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .scale-btn.selected {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .progress {
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .card {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            h2 {
+                font-size: 20px;
+            }
+            button {
+                font-size: 14px;
+                padding: 10px 18px;
+            }
+        }
     </style>
 </head>
+    <script>
+        // === GLOBÁLNE PREMENNÉ ===
+        let currentScreen = 'intro'; // intro, demographics, questionnaire, results
+        let consent = false;
+        let demographics = {
+            age: '',
+            gender: '',
+            education: '',
+            socialStatus: '',
+            relationship: '',
+            religious: ''
+        };
+        let currentSection = 0;
+        let responses = {};
+        
+        // === OTÁZKY ===
+        const miqQuestions = [
+            { text: "Veľmi sa snažím správať čestne pri väčšine veci, ktoré robím.", reverse: false, id: 1 },
+            { text: "Neubližovať ostatným ľuďom je jedno z pravidiel, podľa ktorého sa snažím žiť.", reverse: false, id: 2 },
+            { text: "Je pre mňa dôležité správať k ľuďom férovo.", reverse: false, id: 3 },
+            { text: "Chcem aby ostatní ľudia vedeli, že sa na mňa môžu spoľahnúť.", reverse: false, id: 4 },
+            { text: "Vždy konám spôsobom, ktorý prináša čo najviac dobra a čo najmenej škodí ostatným ľuďom.", reverse: false, id: 5 },
+            { text: "Ak robenie niečoho ublíži inej osobe, snažím sa tomu vyhnúť, aj keby o tom nikto nevedel.", reverse: false, id: 6 },
+            { text: "Jednou z najdôležitejších vecí v živote je robiť to čo vieš, že je správne.", reverse: false, id: 7 },
+            { text: "Keď sa raz rozhodnem o tom, čo je správne urobiť, tak to aj urobím.", reverse: false, id: 8 },
+            { text: "Pokiaľ sa rozhodnem spraviť niečo čo mi pomôže, nezáleží na tom, či bude iným ľuďom spôsobená ujma.", reverse: true, id: 9 },
+            { text: "Je v poriadku spraviť niečo, o čom vieš, že je nesprávne, ak odmena za to je skvelá.", reverse: true, id: 10 },
+            { text: "Ak sa nikto nepozerá alebo o tom nikto nebude vedieť, tak nezáleží na tom či urobím správnu vec.", reverse: true, id: 11 },
+            { text: "Je dôležitejšie, ak si ľudia myslia, že som čestný, než byť skutočne čestný.", reverse: true, id: 12 },
+            { text: "Ak na to nikto nepríde, tak je v poriadku ukradnúť malú čiastku peňazí či iných vecí, ktoré nebudú nikomu chýbať.", reverse: true, id: 13 },
+            { text: "Nemá zmysel vynakladať maximálne úsilie na to, aby som urobil niečo dobré, ak nie je nablízku nikto, kto by to ocenil.", reverse: true, id: 14 },
+            { text: "Ak mi pokladník omylom vydá o 10 eur navyše, zvyčajne sa tvárim, akoby som si to nevšimol.", reverse: true, id: 15 },
+            { text: "Klamanie a podvádzanie sú veci, ktoré jednoducho musíš v dnešnom svete robiť.", reverse: true, id: 16 },
+            { text: "Robiť veci, ktoré niektorí ľudia môžu považovať za nečestné, mi nevadí.", reverse: true, id: 17 },
+            { text: "Ak sa ku mne ľudia správajú zle, budem sa k nim správať rovnakým spôsobom.", reverse: true, id: 18 },
+            { text: "Súhlasím s rozhodnutím skupiny, aj keď viem, že je to morálne nesprávne.", reverse: true, id: 19 },
+            { text: "Mať morálne hodnoty je v dnešnej spoločnosti zbytočné.", reverse: true, id: 20 }
+        ];
+        
+        // Randomizácia MIQ otázok (fixný seed)
+        function shuffleArray(array, seed) {
+            const arr = [...array];
+            let currentSeed = seed;
+            for (let i = arr.length - 1; i > 0; i--) {
+                currentSeed = (currentSeed * 9301 + 49297) % 233280;
+                const j = Math.floor((currentSeed / 233280) * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+        
+        const shuffledMiq = shuffleArray(miqQuestions, 12345);
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-const ComprehensiveQuestionnaire = () => {
-  const [showIntro, setShowIntro] = useState(true);
-  const [showDemographics, setShowDemographics] = useState(false);
-  const [consent, setConsent] = useState(false);
-  const [demographics, setDemographics] = useState({
-    age: '',
-    gender: '',
-    education: '',
-    relationship: '',
-    socialStatus: '',
-    religious: ''
-  });
-  const [currentSection, setCurrentSection] = useState(0);
-  const [responses, setResponses] = useState({});
-  const [showResults, setShowResults] = useState(false);
-  const [dataSaved, setDataSaved] = useState(false);
-
-  // Pridaj CSS pre mobilné zariadenia
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @media (max-width: 768px) {
-        .container { padding: 12px !important; }
-        h1 { font-size: 24px !important; line-height: 1.2 !important; }
-        h2 { font-size: 20px !important; }
-        h3 { font-size: 18px !important; }
-        p { font-size: 14px !important; }
-        button { font-size: 14px !important; min-height: 44px !important; }
-        .prose p { font-size: 14px !important; }
-        input[type="radio"], input[type="checkbox"] { min-width: 20px !important; min-height: 20px !important; }
-        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
-      }
-
-      @media (max-width: 640px) {
-        body { font-size: 14px; }
-        .max-w-4xl, .max-w-3xl { max-width: 100% !important; padding: 0 8px !important; }
-        .p-6, .p-8 { padding: 16px !important; }
-        .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
-        .py-3 { padding-top: 12px !important; padding-bottom: 12px !important; }
-        .gap-4 { gap: 8px !important; }
-        .space-y-6 > * + * { margin-top: 16px !important; }
-        .text-3xl { font-size: 22px !important; }
-        .text-2xl { font-size: 20px !important; }
-        .text-xl { font-size: 18px !important; }
-        table { font-size: 12px !important; }
-        th, td { padding: 6px 4px !important; }
-      }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
-  }, []);
-
-  // Funkcia na vytvorenie fixného náhodného poradia (seeded shuffle)
-  const seededShuffle = (array, seed) => {
-    const arr = [...array];
-    let currentSeed = seed;
-    
-    const seededRandom = () => {
-      currentSeed = (currentSeed * 9301 + 49297) % 233280;
-      return currentSeed / 233280;
-    };
-    
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(seededRandom() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  };
-
-  const miqQuestions = [
-    { text: "Veľmi sa snažím správať čestne pri väčšine veci, ktoré robím.", reverse: false, originalId: 1 },
-    { text: "Neubližovať ostatným ľuďom je jedno z pravidiel, podľa ktorého sa snažím žiť.", reverse: false, originalId: 2 },
-    { text: "Je pre mňa dôležité správať k ľuďom férovo.", reverse: false, originalId: 3 },
-    { text: "Chcem aby ostatní ľudia vedeli, že sa na mňa môžu spoľahnúť.", reverse: false, originalId: 4 },
-    { text: "Vždy konám spôsobom, ktorý prináša čo najviac dobra a čo najmenej škodí ostatným ľuďom.", reverse: false, originalId: 5 },
-    { text: "Ak robenie niečoho ublíži inej osobe, snažím sa tomu vyhnúť, aj keby o tom nikto nevedel.", reverse: false, originalId: 6 },
-    { text: "Jednou z najdôležitejších vecí v živote je robiť to čo vieš, že je správne.", reverse: false, originalId: 7 },
-    { text: "Keď sa raz rozhodnem o tom, čo je správne urobiť, tak to aj urobím.", reverse: false, originalId: 8 },
-    { text: "Pokiaľ sa rozhodnem spraviť niečo čo mi pomôže, nezáleží na tom, či bude iným ľuďom spôsobená ujma.", reverse: true, originalId: 9 },
-    { text: "Je v poriadku spraviť niečo, o čom vieš, že je nesprávne, ak odmena za to je skvelá.", reverse: true, originalId: 10 },
-    { text: "Ak sa nikto nepozerá alebo o tom nikto nebude vedieť, tak nezáleží na tom či urobím správnu vec.", reverse: true, originalId: 11 },
-    { text: "Je dôležitejšie, ak si ľudia myslia, že som čestný, než byť skutočne čestný.", reverse: true, originalId: 12 },
-    { text: "Ak na to nikto nepríde, tak je v poriadku ukradnúť malú čiastku peňazí či iných vecí, ktoré nebudú nikomu chýbať.", reverse: true, originalId: 13 },
-    { text: "Nemá zmysel vynakladať maximálne úsilie na to, aby som urobil niečo dobré, ak nie je nablízku nikto, kto by to ocenil.", reverse: true, originalId: 14 },
-    { text: "Ak mi pokladník omylom vydá o 10 eur navyše, zvyčajne sa tvárim, akoby som si to nevšimol.", reverse: true, originalId: 15 },
-    { text: "Klamanie a podvádzanie sú veci, ktoré jednoducho musíš v dnešnom svete robiť.", reverse: true, originalId: 16 },
-    { text: "Robiť veci, ktoré niektorí ľudia môžu považovať za nečestné, mi nevadí.", reverse: true, originalId: 17 },
-    { text: "Ak sa ku mne ľudia správajú zle, budem sa k nim správať rovnakým spôsobom.", reverse: true, originalId: 18 },
-    { text: "Súhlasím s rozhodnutím skupiny, aj keď viem, že je to morálne nesprávne.", reverse: true, originalId: 19 },
-    { text: "Mať morálne hodnoty je v dnešnej spoločnosti zbytočné.", reverse: true, originalId: 20 }
-  ];
-
-  // Použijeme fixný seed pre náhodné poradie (vždy rovnaké)
-  const shuffledMiqQuestions = seededShuffle(miqQuestions, 12345);
-
-  const workerDilemma = "Nedávno jedna spoločnosť prepustila niekoľko zamestnancov z neznámych dôvodov. Niektorí zamestnanci si myslia, že šéfovia odpočúvajú ich súkromné konverzácie cez kamery a mikrofóny v budove a používajú tieto informácie proti nim. Šéfovia však tvrdia, že ich neodpočúvajú. Zamestnanci nemôžu legálne nič urobiť pokiaľ nedokážu, že šéfovia odpočúvajú ich súkromné rozhovory, preto sa dvaja zo zamestnancov vlámu do hlavnej kancelárie a vezmú nahrávky, ktoré dokazujú, že ich šéfovia naozaj odpočúvajú.";
-
-  const doctorDilemma = "Jedna žena mala rakovinu a nemala žiadnu nádej na záchranu. Bola v hrozných bolestiach a bola tak slabá, že veľká dávka liekov proti bolesti, ako morfium, by jej spôsobili smrť. Počas krátkeho obdobia zlepšenia prosila lekára, aby jej dal dostatok morfia na to, aby ju zabil. Povedala, že už nedokáže dlhšie znášať bolesť a tak či tak by o pár týždňov umrela. Po krátkom premýšľaní sa lekár rozhodol dať jej nadmernú dávku morfia.";
-
-  const workerQuestions = [
-    { q: "Súhlasili by ste alebo nesúhlasili s konaním pracovníkov?", type: "7point" },
-    { q: "Bolo správne vlámať sa, pretože nespôsobili spoločnosti veľké škody.", type: "9point", section: "pro" },
-    { q: "Bolo správne vlámať sa, pretože spoločnosť sa neriadila zákonom a konanie zamestnancov umožnilo nastoliť zákon a poriadok.", type: "9point", section: "pro" },
-    { q: "Bolo správne vlámať sa, pretože väčšina robotníkov by ich konanie schválila.", type: "9point", section: "pro" },
-    { q: "Bolo správne vlámať sa, pretože dôvera medzi ľuďmi a individuálna dôstojnosť sú dôležitejšie ako pravidlá spoločnosti.", type: "9point", section: "pro" },
-    { q: "Bolo správne vlámať sa, pretože spoločnosť urobila niečo zlé prvá a dvaja zamestnanci urobili správne.", type: "9point", section: "pro" },
-    { q: "Bolo správne vlámať sa, pretože dvaja zamestnanci nevideli žiadny právny spôsob a vybrali si menšie zlo.", type: "9point", section: "pro" },
-    { q: "Bolo nesprávne vlámať sa, pretože ak by každý konal tak, išli by sme proti zákonu a poriadku.", type: "9point", section: "con" },
-    { q: "Bolo nesprávne vlámať sa, pretože človek nesmie porušovať základné právo na ochranu majetku.", type: "9point", section: "con" },
-    { q: "Bolo nesprávne vlámať sa, pretože riskovať prepustenie len aby ste pomohli iným nie je rozumné.", type: "9point", section: "con" },
-    { q: "Bolo nesprávne vlámať sa, pretože mali využiť všetky dostupné legálne cesty.", type: "9point", section: "con" },
-    { q: "Bolo nesprávne vlámať sa, pretože človek nekradne, ak chce byť považovaný za slušného.", type: "9point", section: "con" },
-    { q: "Bolo nesprávne vlámať sa, pretože prepustenie iných s nimi nemalo nič spoločné.", type: "9point", section: "con" }
-  ];
-
-  const doctorQuestions = [
-    { q: "Súhlasili by ste alebo nesúhlasili s konaním lekára?", type: "7point" },
-    { q: "Lekár sa zachoval správne, pretože musel konať podľa svojho svedomia. Bolesť ženy oprávňovala ignorovať povinnosť zachovať život.", type: "9point", section: "pro" },
-    { q: "Lekár sa zachoval správne, pretože bol jediný kto mohol spraviť to, o čo ho žena požiadala.", type: "9point", section: "pro" },
-    { q: "Lekár sa zachoval správne, pretože urobil iba to, k čomu ho žena presvedčila.", type: "9point", section: "pro" },
-    { q: "Lekár sa zachoval správne, pretože žena by tak či tak umrela.", type: "9point", section: "pro" },
-    { q: "Lekár sa zachoval správne, pretože v skutočnosti neporušil zákon a chcel len skrátiť utrpenie.", type: "9point", section: "pro" },
-    { q: "Lekár sa zachoval správne, pretože väčšina jeho kolegov by sa zachovali rovnako.", type: "9point", section: "pro" },
-    { q: "Lekár sa zachoval nesprávne, pretože konal v rozpore s presvedčením ostatných lekárov.", type: "9point", section: "con" },
-    { q: "Lekár sa zachoval nesprávne, pretože človek by mal mať úplnú vieru v lekárov záväzok zachrániť každý život.", type: "9point", section: "con" },
-    { q: "Lekár sa zachoval nesprávne, pretože ochrana života je najvyššou morálnou povinnosťou.", type: "9point", section: "con" },
-    { q: "Lekár sa zachoval nesprávne, pretože sa mohol dostať do veľkých problémov.", type: "9point", section: "con" },
-    { q: "Lekár sa zachoval nesprávne, pretože to mohol mať jednoduchšie, keby počkal.", type: "9point", section: "con" },
-    { q: "Lekár sa zachoval nesprávne, pretože porušil zákon.", type: "9point", section: "con" }
-  ];
-
-  const cdRiscQuestions = [
-    "Viem sa prispôsobiť, keď sa objavia zmeny.",
-    "Viem sa vysporiadať s čímkoľvek čo mi príde do cesty.",
-    "Snažím sa vidieť vtipnú stránku vecí, keď čelím problémom.",
-    "Vyrovnávanie sa so stresom ma môže posilniť.",
-    "Mám tendenciu dať sa dokopy po zranení, chorobe či iných ťažkostiach.",
-    "Verím, že dokážem dosiahnuť svoje ciele, aj keď mi v ceste stoja prekážky.",
-    "Pod tlakom ostávam sústredený a premýšľam jasne.",
-    "Nedám sa ľahko odradiť neúspechom.",
-    "Považujem sa za silného človeka, keď čelím životným výzvam a ťažkostiam.",
-    "Som schopný zvládať nepríjemné alebo bolestivé pocity ako smútok, strach a hnev.",
-    "Ďakujeme, že odpovedáte pozorne. Toto je kontrolná položka. Zvoľte, prosím možnosť 1."
-  ];
-
-  const bfiQuestions = [
-    "sa veľa znepokojuje.",
-    "má sklon cítiť sa skľúčený, skleslý.",
-    "je emocionálne stabilný, neznepokojí sa tak ľahko.",
-    "je uvoľnený, dobre zvláda stres.",
-    "sa cíti sebaistý, je spokojný so sebou.",
-    "je temperamentný, ľahko sa rozčúli."
-  ];
-
-  const [shuffledMiq] = useState(() => shuffledMiqQuestions);
-
-  const sections = [
-    { 
-      name: "Morálna identita", 
-      instruction: "V tejto časti bude Vašou úlohou vyjadriť Váš súhlas či nesúhlas s nasledujúcimi výrokmi.",
-      questions: shuffledMiq, 
-      scale: "6point" 
-    },
-    { 
-      name: "Morálne uvažovanie - Robotníci", 
-      instruction: "Vašou úlohou v častiach 2 a 3 bude prečítať si dilemu a vyjadriť Váš súhlas či nesúhlas s konaním postáv v dileme, a tiež vyjadriť Váš súhlas či nesúhlas s argumentami uvedenými nižšie.",
-      questions: workerQuestions, 
-      dilemma: workerDilemma 
-    },
-    { 
-      name: "Morálne uvažovanie - Lekár", 
-      instruction: "Vašou úlohou v častiach 2 a 3 bude prečítať si dilemu a vyjadriť Váš súhlas či nesúhlas s konaním postáv v dileme, a tiež vyjadriť Váš súhlas či nesúhlas s argumentami uvedenými nižšie.",
-      questions: doctorQuestions, 
-      dilemma: doctorDilemma 
-    },
-    { 
-      name: "Resilencia", 
-      instruction: "V tejto časti bude Vašou úlohou vyjadriť Váš súhlas či nesúhlas s nasledujúcimi výrokmi.",
-      questions: cdRiscQuestions, 
-      scale: "5point-cdrisc" 
-    },
-    { 
-      name: "Emocionálna stabilita", 
-      instruction: "V tejto časti bude Vašou úlohou vyjadriť Váš súhlas či nesúhlas s nasledujúcimi výrokmi.",
-      questions: bfiQuestions, 
-      scale: "5point-bfi" 
-    }
-  ];
-
-  const handleResponse = (sectionIdx, questionIdx, value) => {
-    setResponses(prev => ({
-      ...prev,
-      [`${sectionIdx}-${questionIdx}`]: value
-    }));
-  };
-
-  const calculateResults = () => {
-    const results = {};
-
-    // Morálna identita - použijeme shuffled verziu
-    const moralSelfItems = shuffledMiq.filter(q => !q.reverse && q.originalId <= 8);
-    const moralIntegrityItems = shuffledMiq.filter(q => q.reverse);
-    
-    let moralSelfSum = 0;
-    let moralSelfCount = 0;
-    
-    shuffledMiq.forEach((question, idx) => {
-      const val = responses[`0-${idx}`];
-      if (val !== undefined && !question.reverse && question.originalId <= 8) {
-        moralSelfSum += val;
-        moralSelfCount++;
-      }
-    });
-
-    let moralIntegritySum = 0;
-    let moralIntegrityCount = 0;
-    
-    shuffledMiq.forEach((question, idx) => {
-      const val = responses[`0-${idx}`];
-      if (val !== undefined && question.reverse) {
-        moralIntegritySum += (7 - val);
-        moralIntegrityCount++;
-      }
-    });
-
-    results.moralSelf = moralSelfCount > 0 ? (moralSelfSum / moralSelfCount).toFixed(2) : 0;
-    results.moralIntegrity = moralIntegrityCount > 0 ? (moralIntegritySum / moralIntegrityCount).toFixed(2) : 0;
-
-    let workerResps = [];
-    let doctorResps = [];
-    
-    for (let i = 1; i < 13; i++) {
-      const val = responses[`1-${i}`];
-      if (val !== undefined) workerResps.push(val);
-    }
-    
-    for (let i = 1; i < 13; i++) {
-      const val = responses[`2-${i}`];
-      if (val !== undefined) doctorResps.push(val);
-    }
-
-    const calcC = (arr) => {
-      if (arr.length < 6) return 0;
-      const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-      const variance = arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length;
-      return Math.min(100, Math.max(0, 100 - (variance * 10)));
-    };
-
-    results.mjtCScore = ((calcC(workerResps) + calcC(doctorResps)) / 2).toFixed(1);
-
-    let resSum = 0;
-    let resCount = 0;
-    for (let i = 0; i < 10; i++) {
-      const val = responses[`3-${i}`];
-      if (val !== undefined) {
-        resSum += val;
-        resCount++;
-      }
-    }
-    results.resilience = resCount > 0 ? resSum : 0;
-
-    const revItems = [2, 3, 4]; // Položky 3, 4, 5 (indexy 2, 3, 4) - pozitívne formulované
-    let neSum = 0;
-    let neCount = 0;
-    
-    for (let i = 0; i < 6; i++) {
-      const val = responses[`4-${i}`];
-      if (val !== undefined) {
-        neSum += revItems.includes(i) ? (6 - val) : val;
-        neCount++;
-      }
-    }
-    
-    results.negativeEmotionality = neCount > 0 ? (neSum / neCount).toFixed(2) : 0;
-
-    return results;
-  };
-
-  // Uloženie dát pri zobrazení výsledkov
-  React.useEffect(() => {
-    if (!showResults) return;
-
-    const saveData = async () => {
-      try {
-        const results = calculateResults();
-        const timestamp = new Date().toISOString();
+    const workerDilemma = "Nedávno jedna spoločnosť prepustila niekoľko zamestnancov z neznámych dôvodov. Niektorí zamestnanci si myslia, že šéfovia odpočúvajú ich súkromné konverzácie cez kamery a mikrofóny v budove a používajú tieto informácie proti nim. Šéfovia však tvrdia, že ich neodpočúvajú. Zamestnanci nemôžu legálne nič urobiť pokiaľ nedokážu, že šéfovia odpočúvajú ich súkromné rozhovory, preto sa dvaja zo zamestnancov vlámu do hlavnej kancelárie a vezmú nahrávky, ktoré dokazujú, že ich šéfovia naozaj odpočúvajú.";
         
-        // Uloženie do localStorage
-        const respondentData = {
-          timestamp,
-          demographics,
-          responses,
-          results
-        };
-
-        const existingData = localStorage.getItem('questionnaire_data');
-        let allData = existingData ? JSON.parse(existingData) : [];
-        allData.push(respondentData);
-        localStorage.setItem('questionnaire_data', JSON.stringify(allData));
-
-        // Odoslanie do Google Sheets
-        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwUBwarAiGFt-SeZevH75YEbIK0_r7VyZTI4ZW-96wIXKOjubfZLyzctS349a0N7_xw8w/exec';
+        const doctorDilemma = "Jedna žena trpela nevyliečiteľnou chorobou a zomierala. Na konci života mala obrovské bolesti, ktoré už nebolo možné zmierniť žiadnymi liekmi. Nebola pri vedomí, takže bola udržiavaná pri živote iba pomocou prístrojov. Navyše pred stratou vedomia požiadala lekára, aby ukončil jej utrpenie a pomohol jej zomrieť. Z právneho hľadiska by to mohlo byť vnímané ako vražda, lekár sa však rozhodol splniť jej prianie a ženu usmrtil.";
         
-        const respondentCount = allData.length;
-        const respondentId = `R${String(respondentCount).padStart(3, '0')}`;
+        const workerQuestions = [
+            { q: "Súhlasili by ste alebo nesúhlasili s konaním pracovníkov?", type: "7point" },
+            { q: "Bolo správne vlámať sa, pretože nespôsobili spoločnosti veľké škody.", type: "9point", section: "pro" },
+            { q: "Bolo správne vlámať sa, pretože spoločnosť sa neriadila zákonom a konanie zamestnancov umožnilo nastoliť zákon a poriadok.", type: "9point", section: "pro" },
+            { q: "Bolo správne vlámať sa, pretože väčšina robotníkov by ich konanie schválila.", type: "9point", section: "pro" },
+            { q: "Bolo správne vlámať sa, pretože dôvera medzi ľuďmi a individuálna dôstojnosť sú dôležitejšie ako pravidlá spoločnosti.", type: "9point", section: "pro" },
+            { q: "Bolo správne vlámať sa, pretože spoločnosť urobila niečo zlé prvá a dvaja zamestnanci urobili správne.", type: "9point", section: "pro" },
+            { q: "Bolo správne vlámať sa, pretože dvaja zamestnanci nevideli žiadny právny spôsob a vybrali si menšie zlo.", type: "9point", section: "pro" },
+            { q: "Bolo nesprávne vlámať sa, pretože ak by každý konal tak, išli by sme proti zákonu a poriadku.", type: "9point", section: "con" },
+            { q: "Bolo nesprávne vlámať sa, pretože človek nesmie porušovať základné právo na ochranu majetku.", type: "9point", section: "con" },
+            { q: "Bolo nesprávne vlámať sa, pretože riskovať prepustenie len aby ste pomohli iným nie je rozumné.", type: "9point", section: "con" },
+            { q: "Bolo nesprávne vlámať sa, pretože mali využiť všetky dostupné legálne cesty.", type: "9point", section: "con" },
+            { q: "Bolo nesprávne vlámať sa, pretože človek nekradne, ak chce byť považovaný za slušného.", type: "9point", section: "con" },
+            { q: "Bolo nesprávne vlámať sa, pretože prepustenie iných s nimi nemalo nič spoločné.", type: "9point", section: "con" }
+        ];
         
-        const miqResponses = [];
-        for (let i = 0; i < 20; i++) {
-          miqResponses.push(responses[`0-${i}`] || '');
-        }
+        const doctorQuestions = [
+            { q: "Súhlasili by ste alebo nesúhlasili s konaním lekára?", type: "7point" },
+            { q: "Lekár sa zachoval správne, pretože musel konať podľa svojho svedomia. Bolesť ženy oprávňovala ignorovať povinnosť zachovať život.", type: "9point", section: "pro" },
+            { q: "Lekár sa zachoval správne, pretože bol jediný kto mohol spraviť to, o čo ho žena požiadala.", type: "9point", section: "pro" },
+            { q: "Lekár sa zachoval správne, pretože urobil iba to, k čomu ho žena presvedčila.", type: "9point", section: "pro" },
+            { q: "Lekár sa zachoval správne, pretože žena by tak či tak umrela.", type: "9point", section: "pro" },
+            { q: "Lekár sa zachoval správne, pretože v skutočnosti neporušil zákon a chcel len skrátiť utrpenie.", type: "9point", section: "pro" },
+            { q: "Lekár sa zachoval správne, pretože väčšina jeho kolegov by sa zachovali rovnako.", type: "9point", section: "pro" },
+            { q: "Lekár sa zachoval nesprávne, pretože konal v rozpore s presvedčením ostatných lekárov.", type: "9point", section: "con" },
+            { q: "Lekár sa zachoval nesprávne, pretože človek by mal mať úplnú vieru v lekárov záväzok zachrániť každý život.", type: "9point", section: "con" },
+            { q: "Lekár sa zachoval nesprávne, pretože ochrana života je najvyššou morálnou povinnosťou.", type: "9point", section: "con" },
+            { q: "Lekár sa zachoval nesprávne, pretože sa mohol dostať do veľkých problémov.", type: "9point", section: "con" },
+            { q: "Lekár sa zachoval nesprávne, pretože to mohol mať jednoduchšie, keby počkal.", type: "9point", section: "con" },
+            { q: "Lekár sa zachoval nesprávne, pretože porušil zákon.", type: "9point", section: "con" }
+        ];
+        const cdRiscQuestions = [
+            "Viem sa prispôsobiť, keď sa objavia zmeny.",
+            "Viem sa vysporiadať s čímkoľvek čo mi príde do cesty.",
+            "Snažím sa vidieť vtipnú stránku vecí, keď čelím problémom.",
+            "Vyrovnávanie sa so stresom ma môže posilniť.",
+            "Mám tendenciu dať sa dokopy po zranení, chorobe či iných ťažkostiach.",
+            "Verím, že dokážem dosiahnuť svoje ciele, aj keď mi v ceste stoja prekážky.",
+            "Pod tlakom ostávam sústredený a premýšľam jasne.",
+            "Nedám sa ľahko odradiť neúspechom.",
+            "Považujem sa za silného človeka, keď čelím životným výzvam a ťažkostiam.",
+            "Som schopný zvládať nepríjemné alebo bolestivé pocity ako smútok, strach a hnev.",
+            "Ďakujeme, že odpovedáte pozorne. Toto je kontrolná položka. Zvoľte, prosím možnosť 1."
+        ];
         
-        const mjtRobotnici = [];
-        for (let i = 0; i < 12; i++) {
-          mjtRobotnici.push(responses[`1-${i}`] || '');
-        }
+        const bfiQuestions = [
+            "sa veľa znepokojuje.",
+            "má sklon cítiť sa skľúčený, skleslý.",
+            "je emocionálne stabilný, neznepokojí sa tak ľahko.",
+            "je uvoľnený, dobre zvláda stres.",
+            "sa cíti sebaistý, je spokojný so sebou.",
+            "je temperamentný, ľahko sa rozčúli."
+        ];
         
-        const mjtLekar = [];
-        for (let i = 12; i < 24; i++) {
-          mjtLekar.push(responses[`1-${i}`] || '');
-        }
-        
-        const cdRiscResponses = [];
-        for (let i = 0; i < 11; i++) {
-          cdRiscResponses.push(responses[`2-${i}`] || '');
-        }
-        
-        const bfiResponses = [];
-        for (let i = 0; i < 6; i++) {
-          bfiResponses.push(responses[`3-${i}`] || '');
-        }
-        
-        const payload = {
-          id: respondentId,
-          timestamp: timestamp,
-          demographics: demographics,
-          responses: {
-            miq: miqResponses,
-            mjt: {
-              robotnici: mjtRobotnici,
-              lekar: mjtLekar
+        // Sekcie dotazníka
+        const sections = [
+            {
+                name: "Morálna identita",
+                instruction: "V tejto časti bude Vašou úlohou vyjadriť Váš súhlas či nesúhlas s nasledujúcimi výrokmi.",
+                questions: shuffledMiq,
+                scale: "6point"
             },
-            cdrisc: cdRiscResponses,
-            bfi: bfiResponses
-          },
-          results: results
-        };
+            {
+                name: "Morálne uvažovanie - Robotníci",
+                instruction: "Vašou úlohou v častiach 2 a 3 bude prečítať si dilemu a vyjadriť Váš súhlas či nesúhlas s konaním postáv v dileme, a tiež vyjadriť Váš súhlas či nesúhlas s argumentami uvedenými nižšie.",
+                questions: workerQuestions,
+                dilemma: workerDilemma
+            },
+            {
+                name: "Morálne uvažovanie - Lekár",
+                instruction: "Vašou úlohou v častiach 2 a 3 bude prečítať si dilemu a vyjadriť Váš súhlas či nesúhlas s konaním postáv v dileme, a tiež vyjadriť Váš súhlas či nesúhlas s argumentami uvedenými nižšie.",
+                questions: doctorQuestions,
+                dilemma: doctorDilemma
+            },
+            {
+                name: "Resilencia",
+                instruction: "V tejto časti bude Vašou úlohou vyjadriť Váš súhlas či nesúhlas s nasledujúcimi výrokmi.",
+                questions: cdRiscQuestions,
+                scale: "5point-cdrisc"
+            },
+            {
+                name: "Emocionálna stabilita",
+                instruction: "V tejto časti bude Vašou úlohou vyjadriť Váš súhlas či nesúhlas s nasledujúcimi výrokmi.",
+                questions: bfiQuestions,
+                scale: "5point-bfi"
+            }
+        ];
+        // === VÝPOČTOVÉ FUNKCIE ===
+        function calculateResults() {
+            const results = {};
+            
+            // Morálna motivácia (MM) - otázky 1-8 (nie reverse)
+            let mmSum = 0, mmCount = 0;
+            shuffledMiq.forEach((q, idx) => {
+                const val = responses[`0-${idx}`];
+                if (val !== undefined && !q.reverse && q.id <= 8) {
+                    mmSum += val;
+                    mmCount++;
+                }
+            });
+            results.moralSelf = mmCount > 0 ? (mmSum / mmCount).toFixed(2) : 0;
+            
+            // Morálne konanie (MK) - reverzné otázky
+            let mkSum = 0, mkCount = 0;
+            shuffledMiq.forEach((q, idx) => {
+                const val = responses[`0-${idx}`];
+                if (val !== undefined && q.reverse) {
+                    mkSum += (7 - val);
+                    mkCount++;
+                }
+            });
+            results.moralIntegrity = mkCount > 0 ? (mkSum / mkCount).toFixed(2) : 0;
+            
+            // MJT C-skóre
+            const workerResps = [];
+            const doctorResps = [];
+            for (let i = 1; i < 13; i++) {
+                if (responses[`1-${i}`]) workerResps.push(responses[`1-${i}`]);
+                if (responses[`2-${i}`]) doctorResps.push(responses[`2-${i}`]);
+            }
+            
+            function calcCScore(arr) {
+                if (arr.length < 6) return 0;
+                const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+                const variance = arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length;
+                return Math.min(100, Math.max(0, 100 - (variance * 10)));
+            }
+            
+            const workerC = calcCScore(workerResps);
+            const doctorC = calcCScore(doctorResps);
+            results.mjtCScore = ((workerC + doctorC) / 2).toFixed(1);
+            
+            // CD-RISC Odolnosť
+            let resSum = 0;
+            for (let i = 0; i < 10; i++) {
+                if (responses[`3-${i}`]) resSum += responses[`3-${i}`];
+            }
+            results.resilience = resSum;
+            
+            // BFI Negatívna emocionalita
+            const revItems = [2, 3, 4];
+            let neSum = 0, neCount = 0;
+            for (let i = 0; i < 6; i++) {
+                const val = responses[`4-${i}`];
+                if (val !== undefined) {
+                    neSum += revItems.includes(i) ? (6 - val) : val;
+                    neCount++;
+                }
+            }
+            results.negativeEmotionality = neCount > 0 ? (neSum / neCount).toFixed(2) : 0;
+            
+            return results;
+        }
         
-        await fetch(GOOGLE_SHEETS_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
+        // Uloženie dát do Google Sheets
+        async function saveToGoogleSheets() {
+            const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwUBwarAiGFt-SeZevH75YEbIK0_r7VyZTI4ZW-96wIXKOjubfZLyzctS349a0N7_xw8w/exec';
+            
+            try {
+                const results = calculateResults();
+                const timestamp = new Date().toISOString();
+                
+                const existingData = localStorage.getItem('questionnaire_data');
+                const respondentCount = existingData ? JSON.parse(existingData).length + 1 : 1;
+                const respondentId = `R${String(respondentCount).padStart(3, '0')}`;
+                
+                const miqResponses = [];
+                for (let i = 0; i < 20; i++) {
+                    miqResponses.push(responses[`0-${i}`] || '');
+                }
+                
+                const mjtRobotnici = [];
+                for (let i = 0; i < 13; i++) {
+                    mjtRobotnici.push(responses[`1-${i}`] || '');
+                }
+                
+                const mjtLekar = [];
+                for (let i = 0; i < 13; i++) {
+                    mjtLekar.push(responses[`2-${i}`] || '');
+                }
+                
+                const cdRiscResponses = [];
+                for (let i = 0; i < 11; i++) {
+                    cdRiscResponses.push(responses[`3-${i}`] || '');
+                }
+                
+                const bfiResponses = [];
+                for (let i = 0; i < 6; i++) {
+                    bfiResponses.push(responses[`4-${i}`] || '');
+                }
+                
+                const payload = {
+                    id: respondentId,
+                    timestamp: timestamp,
+                    demographics: demographics,
+                    responses: {
+                        miq: miqResponses,
+                        mjt: {
+                            robotnici: mjtRobotnici,
+                            lekar: mjtLekar
+                        },
+                        cdrisc: cdRiscResponses,
+                        bfi: bfiResponses
+                    },
+                    results: results
+                };
+                
+                await fetch(SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                console.log('✅ Dáta uložené do Google Sheets');
+            } catch (error) {
+                console.error('Chyba:', error);
+            }
+        }
+        // === RENDEROVANIE ===
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (currentScreen === 'intro') {
+                app.innerHTML = `
+                    <div class="container">
+                        <div class="card">
+                            <h1>Dotazník morálneho správania, odolnosti a emocionálnej stability</h1>
+                            
+                            <p><strong>Dobrý deň,</strong></p>
+                            <p>Som Claudia Bártová, študentka Psychológie na Univerzite Komenského v Bratislave a obraciam sa na Vás s prosbou o účasť na výskume, ktorý sa uskutočňuje v rámci mojej diplomovej práce.</p>
+                            
+                            <div class="info-box">
+                                <p><strong>Cieľom tejto štúdie</strong> je preskúmať vzťahy medzi morálnym uvažovaním, morálnou identitou, rezilienciou a emocionálnou stabilitou.</p>
+                            </div>
+                            
+                            <p>Dotazník pozostáva z <strong>viacerých častí</strong>, ktoré Vám zabavia približne <strong>10-15 minút</strong>. Na konci dotazníka uvidíte <strong>Vaše výsledky</strong> s osobným vyhodnotením.</p>
+                            
+                            <p>Všetky <strong>vaše odpovede sú anonymné</strong> a ukončenie vypĺňania dotazníka je možné kedykoľvek. Odpovedajte prosím pravdivo, žiadna z odpovedí nie je nesprávna.</p>
+                            
+                            <p>V prípade akýchkoľvek otázok ma môžete kontaktovať na e-mailovej adrese <a href="mailto:claudiabartova@gmail.com" style="color: #3b82f6;">claudiabartova@gmail.com</a>.</p>
+                            
+                            <p><strong>Ďakujem za zapojenie sa do výskumu a pomoc pri mojej diplomovej práci.</strong></p>
+                            
+                            <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                <label style="display: flex; align-items: start; cursor: pointer;">
+                                    <input type="checkbox" id="consentCheck" ${consent ? 'checked' : ''} 
+                                           onchange="consent = this.checked; render();" 
+                                           style="margin-top: 4px;">
+                                    <span style="margin-left: 10px; font-weight: 600;">
+                                        Súhlasím s anonymným spracovaním dát dotazníka pre účely výskumu.
+                                    </span>
+                                </label>
+                            </div>
+                            
+                            <button onclick="if(consent) { currentScreen = 'demographics'; render(); }" 
+                                    ${!consent ? 'disabled' : ''}>
+                                ${consent ? 'Pokračovať' : 'Prosím, potvrďte súhlas'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+       if (currentScreen === 'demographics') {
+                app.innerHTML = `
+                    <div class="container">
+                        <div class="card">
+                            <h2>Demografické údaje</h2>
+                            <p>Prosím, vyplňte nasledujúce údaje:</p>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label><strong>1. Aký je Váš vek? (uvádzajte číslom)</strong></label>
+                                <input type="number" id="age" value="${demographics.age}" 
+                                       oninput="demographics.age = this.value; render();">
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label><strong>2. Aké je Vaše pohlavie?</strong></label>
+                                <select id="gender" onchange="demographics.gender = this.value; render();">
+                                    <option value="">-- Vyberte --</option>
+                                    <option value="Muž" ${demographics.gender === 'Muž' ? 'selected' : ''}>Muž</option>
+                                    <option value="Žena" ${demographics.gender === 'Žena' ? 'selected' : ''}>Žena</option>
+                                    <option value="Iné" ${demographics.gender === 'Iné' ? 'selected' : ''}>Iné</option>
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label><strong>3. Aké je Vaše najvyššie dosiahnuté vzdelanie?</strong></label>
+                                <select id="education" onchange="demographics.education = this.value; render();">
+                                    <option value="">-- Vyberte --</option>
+                                    <option value="Základné" ${demographics.education === 'Základné' ? 'selected' : ''}>Základné</option>
+                                    <option value="Stredoškolské" ${demographics.education === 'Stredoškolské' ? 'selected' : ''}>Stredoškolské</option>
+                                    <option value="Vysokoškolské (Bc.)" ${demographics.education === 'Vysokoškolské (Bc.)' ? 'selected' : ''}>Vysokoškolské (Bc.)</option>
+                                    <option value="Vysokoškolské (Mgr./Ing.)" ${demographics.education === 'Vysokoškolské (Mgr./Ing.)' ? 'selected' : ''}>Vysokoškolské (Mgr./Ing.)</option>
+                                    <option value="Doktorandské (PhD.)" ${demographics.education === 'Doktorandské (PhD.)' ? 'selected' : ''}>Doktorandské (PhD.)</option>
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label><strong>4. Aký je Váš sociálny status?</strong></label>
+                                <select id="socialStatus" onchange="demographics.socialStatus = this.value; render();">
+                                    <option value="">-- Vyberte --</option>
+                                    <option value="Študent/ka" ${demographics.socialStatus === 'Študent/ka' ? 'selected' : ''}>Študent/ka</option>
+                                    <option value="Zamestnaný/á" ${demographics.socialStatus === 'Zamestnaný/á' ? 'selected' : ''}>Zamestnaný/á</option>
+                                    <option value="Nezamestnaný/á" ${demographics.socialStatus === 'Nezamestnaný/á' ? 'selected' : ''}>Nezamestnaný/á</option>
+                                    <option value="Na materskej/rodičovskej dovolenke" ${demographics.socialStatus === 'Na materskej/rodičovskej dovolenke' ? 'selected' : ''}>Na materskej/rodičovskej dovolenke</option>
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label><strong>5. Aký je Váš partnerský stav?</strong></label>
+                                <select id="relationship" onchange="demographics.relationship = this.value; render();">
+                                    <option value="">-- Vyberte --</option>
+                                    <option value="Zadaný/á" ${demographics.relationship === 'Zadaný/á' ? 'selected' : ''}>Zadaný/á</option>
+                                    <option value="Slobodný/á" ${demographics.relationship === 'Slobodný/á' ? 'selected' : ''}>Slobodný/á</option>
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label><strong>6. Považujete sa za veriaceho?</strong></label>
+                                <select id="religious" onchange="demographics.religious = this.value; render();">
+                                    <option value="">-- Vyberte --</option>
+                                    <option value="Áno" ${demographics.religious === 'Áno' ? 'selected' : ''}>Áno</option>
+                                    <option value="Nie" ${demographics.religious === 'Nie' ? 'selected' : ''}>Nie</option>
+                                </select>
+                            </div>
+                            
+                            <button onclick="
+                                if (demographics.age && demographics.gender && demographics.education && 
+                                    demographics.socialStatus && demographics.relationship && demographics.religious) {
+                                    currentScreen = 'questionnaire';
+                                    render();
+                                } else {
+                                    alert('Prosím vyplňte všetky polia');
+                                }
+                            ">
+                                Pokračovať
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }   
+           if (currentScreen === 'questionnaire') {
+                const section = sections[currentSection];
+                const allAnswered = section.questions.every((_, idx) => 
+                    responses[`${currentSection}-${idx}`] !== undefined
+                );
+                
+                let questionsHTML = '';
+                
+                section.questions.forEach((q, idx) => {
+                    const questionText = typeof q === 'string' ? q : (q.text || q.q);
+                    const questionType = q.type || section.scale;
+                    
+                    // Sekčné hlavičky pre MJT
+                    let sectionHeader = '';
+                    if (currentSection === 1 && idx === 1) {
+                        sectionHeader = '<div class="info-box" style="background: #dbeafe;"><p><strong>Nakoľko prijateľné sú pre vás nasledujúce argumenty v prospech konania dvoch pracovníkov?</strong></p></div>';
+                    } else if (currentSection === 1 && idx === 7) {
+                        sectionHeader = '<div class="warning-box"><p><strong>Nakoľko prijateľné sú pre vás nasledujúce argumenty v neprospech konania dvoch pracovníkov?</strong></p></div>';
+                    } else if (currentSection === 2 && idx === 1) {
+                        sectionHeader = '<div class="info-box" style="background: #dbeafe;"><p><strong>Nakoľko prijateľné sú pre vás nasledujúce argumenty v prospech konania lekára?</strong></p></div>';
+                    } else if (currentSection === 2 && idx === 7) {
+                        sectionHeader = '<div class="warning-box"><p><strong>Nakoľko prijateľné sú pre vás nasledujúce argumenty v neprospech konania lekára?</strong></p></div>';
+                    }
+                    
+                    questionsHTML += sectionHeader;
+                    questionsHTML += `<div class="question">`;
+                    
+                    if (currentSection === 4) {
+                        questionsHTML += `<p><strong>Osoba, ktorú poznám...</strong> ${questionText}</p>`;
+                    } else {
+                        questionsHTML += `<p><strong>${idx + 1}. ${questionText}</strong></p>`;
+                    }
+                    
+                    // Renderovanie škál
+                    if (questionType === '6point') {
+                        const labels = ["Úplne nesúhlasím", "Nesúhlasím", "Skôr nesúhlasím", "Skôr súhlasím", "Súhlasím", "Úplne súhlasím"];
+                        questionsHTML += '<div class="scale-buttons">';
+                        for (let i = 1; i <= 6; i++) {
+                            const selected = responses[`${currentSection}-${idx}`] === i ? 'selected' : '';
+                            questionsHTML += `
+                                <button class="scale-btn ${selected}" 
+                                        onclick="responses['${currentSection}-${idx}'] = ${i}; render();">
+                                    ${i}<br><small>${labels[i-1]}</small>
+                                </button>
+                            `;
+                        }
+                        questionsHTML += '</div>';
+                    } else if (questionType === '7point') {
+                        const labels = ["Vôbec nesúhlasím", "Nesúhlasím", "Skôr nesúhlasím", "Neutrálne", "Skôr súhlasím", "Súhlasím", "Úplne súhlasím"];
+                        questionsHTML += '<div class="scale-buttons">';
+                        for (let i = 1; i <= 7; i++) {
+                            const selected = responses[`${currentSection}-${idx}`] === i ? 'selected' : '';
+                            questionsHTML += `
+                                <button class="scale-btn ${selected}" 
+                                        onclick="responses['${currentSection}-${idx}'] = ${i}; render();">
+                                    ${i}<br><small>${labels[i-1]}</small>
+                                </button>
+                            `;
+                        }
+                        questionsHTML += '</div>';
+                    } else if (questionType === '9point') {
+                        questionsHTML += '<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">';
+                        questionsHTML += '<span style="font-size: 12px; color: #6b7280;">Vôbec nesúhlasím</span>';
+                        questionsHTML += '<div class="scale-buttons" style="flex: 1;">';
+                        for (let i = -4; i <= 4; i++) {
+                            const selected = responses[`${currentSection}-${idx}`] === i ? 'selected' : '';
+                            questionsHTML += `
+                                <button class="scale-btn ${selected}" 
+                                        onclick="responses['${currentSection}-${idx}'] = ${i}; render();">
+                                    ${i}
+                                </button>
+                            `;
+                        }
+                        questionsHTML += '</div>';
+                        questionsHTML += '<span style="font-size: 12px; color: #6b7280;">Úplne súhlasím</span>';
+                        questionsHTML += '</div>';
+                    } else if (questionType === '5point-cdrisc') {
+                        const labels = ["Vôbec nie pravda", "Zriedka pravda", "Niekedy pravda", "Často pravda", "Takmer vždy pravda"];
+                        questionsHTML += '<div class="scale-buttons">';
+                        for (let i = 1; i <= 5; i++) {
+                            const selected = responses[`${currentSection}-${idx}`] === i ? 'selected' : '';
+                            questionsHTML += `
+                                <button class="scale-btn ${selected}" 
+                                        onclick="responses['${currentSection}-${idx}'] = ${i}; render();">
+                                    ${i}<br><small>${labels[i-1]}</small>
+                                </button>
+                            `;
+                        }
+                        questionsHTML += '</div>';
+                    } else if (questionType === '5point-bfi') {
+                        const labels = ["Úplne nesúhlasím", "Skôr nesúhlasím", "Neutrálne", "Skôr súhlasím", "Úplne súhlasím"];
+                        questionsHTML += '<div class="scale-buttons">';
+                        for (let i = 1; i <= 5; i++) {
+                            const selected = responses[`${currentSection}-${idx}`] === i ? 'selected' : '';
+                            questionsHTML += `
+                                <button class="scale-btn ${selected}" 
+                                        onclick="responses['${currentSection}-${idx}'] = ${i}; render();">
+                                    ${i}<br><small>${labels[i-1]}</small>
+                                </button>
+                            `;
+                        }
+                        questionsHTML += '</div>';
+                    }
+                    
+                    questionsHTML += '</div>';
+                });
+                
+                app.innerHTML = `
+                    <div class="container">
+                        <div class="card">
+                            <h2>${section.name}</h2>
+                            <p class="progress">Sekcia ${currentSection + 1} z ${sections.length}</p>
+                            <div class="info-box">
+                                <p>${section.instruction}</p>
+                            </div>
+                            ${section.dilemma ? `<div class="warning-box"><p><strong>Dilema:</strong> ${section.dilemma}</p></div>` : ''}
+                            ${questionsHTML}
+                            <div class="nav-buttons">
+                                ${currentSection > 0 ? `
+                                    <button class="btn-gray" onclick="currentSection--; render();">
+                                        ← Späť
+                                    </button>
+                                ` : ''}
+                                ${currentSection < sections.length - 1 ? `
+                                    <button ${!allAnswered ? 'disabled' : ''} 
+                                            onclick="if(${allAnswered}) { currentSection++; render(); }"
+                                            style="margin-left: auto;">
+                                        Ďalej →
+                                    </button>
+                                ` : `
+                                    <button class="btn-green" ${!allAnswered ? 'disabled' : ''} 
+                                            onclick="if(${allAnswered}) { currentScreen = 'results'; saveToGoogleSheets(); localStorage.setItem('questionnaire_data', JSON.stringify([...JSON.parse(localStorage.getItem('questionnaire_data') || '[]'), {timestamp: new Date().toISOString(), demographics, responses, results: calculateResults()}])); render(); }"
+                                            style="margin-left: auto;">
+                                        Zobraziť výsledky
+                                    </button>
+                                `}
+                            </div>
+                            <p style="text-align: center; margin-top: 15px; font-size: 14px; color: ${allAnswered ? '#10b981' : '#6b7280'};">
+                                ${allAnswered ? '✓ Všetky otázky zodpovedané' : 'Prosím zodpovedajte všetky otázky pred pokračovaním'}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+               if (currentScreen === 'results') {
+                const results = calculateResults();
+                
+                app.innerHTML = `
+                    <div class="container">
+                        <div class="card" style="background: linear-gradient(to right, #10b981, #14b8a6); color: white;">
+                            <h1>✓ Vaše výsledky</h1>
+                            <p>Ďakujeme za vyplnenie dotazníka! Vaše odpovede boli automaticky uložené.</p>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="color: #10b981;">1. Morálne uvažovanie (MJT)</h3>
+                            <div class="info-box">
+                                <p><strong>Morálne uvažovanie</strong> je schopnosť posúdiť, ktorý čin je morálne správny či nesprávny.</p>
+                            </div>
+                            <p><strong>C-skóre:</strong> ${results.mjtCScore} / 100</p>
+                            <div style="background: ${results.mjtCScore < 20 ? '#ef4444' : results.mjtCScore < 30 ? '#f97316' : results.mjtCScore < 40 ? '#eab308' : '#22c55e'}; color: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                                <strong>Úroveň: ${results.mjtCScore < 20 ? 'Nízka' : results.mjtCScore < 30 ? 'Stredná' : results.mjtCScore < 40 ? 'Vysoká' : 'Veľmi vysoká'}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="color: #3b82f6;">2. Morálna motivácia</h3>
+                            <div class="info-box">
+                                <p><strong>Morálna motivácia</strong> je odhodlanie konať na základe toho čo je podľa morálneho uvažovania správne, teda uprednostňovať morálnu hodnotu pred všetkými ostatnými.</p>
+                            </div>
+                            <p><strong>Skóre:</strong> ${results.moralSelf} / 6</p>
+                            <div style="background: ${results.moralSelf < 3 ? '#ef4444' : results.moralSelf < 4 ? '#eab308' : '#22c55e'}; color: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                                <strong>Úroveň: ${results.moralSelf < 3 ? 'Nízka' : results.moralSelf < 4 ? 'Priemerná' : 'Vysoká'}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="color: #8b5cf6;">3. Morálne konanie</h3>
+                            <div class="info-box">
+                                <p><strong>Morálne konanie</strong> je skutočná implementácia morálnych činov.</p>
+                            </div>
+                            <p><strong>Skóre:</strong> ${results.moralIntegrity} / 6</p>
+                            <div style="background: ${results.moralIntegrity < 3 ? '#ef4444' : results.moralIntegrity < 4 ? '#eab308' : '#22c55e'}; color: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                                <strong>Úroveň: ${results.moralIntegrity < 3 ? 'Nízka' : results.moralIntegrity < 4 ? 'Priemerná' : 'Vysoká'}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="color: #f97316;">4. Odolnosť (CD-RISC-10)</h3>
+                            <div class="info-box">
+                                <p><strong>Odolnosť</strong> je schopnosť vyrovnať sa s nepriaznivými životnými udalosťami.</p>
+                            </div>
+                            <p><strong>Skóre:</strong> ${results.resilience} / 40</p>
+                            <div style="background: ${results.resilience < 25 ? '#ef4444' : results.resilience < 32 ? '#eab308' : '#22c55e'}; color: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                                <strong>Úroveň: ${results.resilience < 25 ? 'Nízka' : results.resilience < 32 ? 'Priemerná' : 'Vysoká'}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="color: #14b8a6;">5. Emocionálna stabilita (BFI-2)</h3>
+                            <div class="info-box">
+                                <p><strong>Emocionálna stabilita</strong> je tendencia zažívať negatívne emócie.</p>
+                            </div>
+                            <p><strong>Skóre (invertované):</strong> ${(5 - results.negativeEmotionality).toFixed(2)} / 5</p>
+                            <div style="background: ${results.negativeEmotionality > 3.59 ? '#ef4444' : results.negativeEmotionality > 2.15 ? '#eab308' : '#22c55e'}; color: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                                <strong>Úroveň: ${results.negativeEmotionality > 3.59 ? 'Nízka' : results.negativeEmotionality > 2.15 ? 'Priemerná' : 'Vysoká'}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="background: #f3f4f6;">
+                            <p style="text-align: center; color: #6b7280;">
+                                Ďakujeme za Vašu účasť vo výskume!<br>
+                                Vaše odpovede boli úspešne odoslané.
+                            </p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+        }
+        // === INICIALIZÁCIA ===
+        
+        // Spusť aplikáciu po načítaní stránky
+        document.addEventListener('DOMContentLoaded', function() {
+            render();
         });
         
-        setDataSaved(true);
-        console.log('✅ Dáta uložené');
-      } catch (error) {
-        setDataSaved(true);
-        console.log('✅ Dáta uložené do localStorage');
-      }
-    };
-
-    if (!dataSaved) {
-      saveData();
-    }
-  }, [showResults, demographics, responses, dataSaved]);
-
-  const renderScale = (sectionIdx, questionIdx, scaleType) => {
-    const currentValue = responses[`${sectionIdx}-${questionIdx}`];
-
-    if (scaleType === "6point") {
-      const labels = ["Vôbec nesúhlasím", "Nesúhlasím", "Skôr nesúhlasím", "Skôr súhlasím", "Súhlasím", "Úplne súhlasím"];
-      return (
-        <div className="space-y-2">
-          <div className="grid grid-cols-6 gap-2">
-            {[1, 2, 3, 4, 5, 6].map(val => (
-              <button
-                key={val}
-                onClick={() => handleResponse(sectionIdx, questionIdx, val)}
-                className={`p-3 rounded border transition-all ${
-                  currentValue === val ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-blue-50 border-gray-300'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-6 gap-2 text-xs text-gray-600">
-            {labels.map((label, i) => <div key={i} className="text-center">{label}</div>)}
-          </div>
-        </div>
-      );
-    }
-
-    if (scaleType === "7point") {
-      const labels = ["Vôbec nesúhlasím", "Nesúhlasím", "Skôr nesúhlasím", "Neutrálne", "Skôr súhlasím", "Súhlasím", "Úplne súhlasím"];
-      return (
-        <div className="space-y-2">
-          <div className="grid grid-cols-7 gap-2">
-            {[1, 2, 3, 4, 5, 6, 7].map(val => (
-              <button
-                key={val}
-                onClick={() => handleResponse(sectionIdx, questionIdx, val)}
-                className={`p-3 rounded border transition-all ${
-                  currentValue === val ? 'bg-green-600 text-white border-green-600' : 'bg-white hover:bg-green-50 border-gray-300'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-2 text-xs text-gray-600">
-            {labels.map((label, i) => <div key={i} className="text-center">{label}</div>)}
-          </div>
-        </div>
-      );
-    }
-
-    if (scaleType === "9point") {
-      return (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-xs text-gray-600 w-20 text-center">Vôbec nesúhlasím</span>
-            <div className="flex gap-1 flex-1 justify-center">
-              {[-4, -3, -2, -1, 0, 1, 2, 3, 4].map(val => (
-                <button
-                  key={val}
-                  onClick={() => handleResponse(sectionIdx, questionIdx, val)}
-                  className={`w-10 h-10 text-sm rounded border transition-all ${
-                    currentValue === val ? 'bg-purple-600 text-white border-purple-600' : 'bg-white hover:bg-purple-50 border-gray-300'
-                  }`}
-                >
-                  {val}
-                </button>
-              ))}
-            </div>
-            <span className="text-xs text-gray-600 w-20 text-center">Úplne súhlasím</span>
-          </div>
-        </div>
-      );
-    }
-
-    if (scaleType === "5point-cdrisc") {
-      const labels = ["Vôbec nie pravda", "Zriedka pravda", "Niekedy pravda", "Často pravda", "Takmer vždy pravda"];
-      return (
-        <div className="space-y-2">
-          <div className="grid grid-cols-5 gap-2">
-            {[0, 1, 2, 3, 4].map(val => (
-              <button
-                key={val}
-                onClick={() => handleResponse(sectionIdx, questionIdx, val)}
-                className={`p-3 rounded border transition-all ${
-                  currentValue === val ? 'bg-orange-600 text-white border-orange-600' : 'bg-white hover:bg-orange-50 border-gray-300'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-5 gap-2 text-xs text-gray-600">
-            {labels.map((label, i) => <div key={i} className="text-center">{label}</div>)}
-          </div>
-        </div>
-      );
-    }
-
-    if (scaleType === "5point-bfi") {
-      const labels = ["Veľmi nesúhlasím", "Nesúhlasím", "Neutrálne", "Súhlasím", "Veľmi súhlasím"];
-      return (
-        <div className="space-y-2">
-          <div className="grid grid-cols-5 gap-2">
-            {[1, 2, 3, 4, 5].map(val => (
-              <button
-                key={val}
-                onClick={() => handleResponse(sectionIdx, questionIdx, val)}
-                className={`p-3 rounded border transition-all ${
-                  currentValue === val ? 'bg-teal-600 text-white border-teal-600' : 'bg-white hover:bg-teal-50 border-gray-300'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-5 gap-2 text-xs text-gray-600">
-            {labels.map((label, i) => <div key={i} className="text-center">{label}</div>)}
-          </div>
-        </div>
-      );
-    }
-  };
-
-  const renderSection = () => {
-    const section = sections[currentSection];
-    
-    return (
-      <div className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg">
-          <p className="text-blue-100 mb-3">Časť {currentSection + 1} z {sections.length}</p>
-          <p className="text-white text-lg leading-relaxed">{section.instruction}</p>
-        </div>
-
-        {section.dilemma && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-            <h3 className="font-semibold text-yellow-900 mb-2">Dilema:</h3>
-            <p className="text-gray-700 leading-relaxed">{section.dilemma}</p>
-          </div>
-        )}
-
-        <div className="space-y-6">
-          {section.questions.map((item, idx) => {
-            const q = typeof item === 'string' ? item : (item.q || item.text);
-            const type = typeof item === 'string' ? section.scale : (item.type || section.scale);
-            const itemSection = typeof item === 'object' ? item.section : null;
-            
-            // Zobrazenie úvodných textov pre MJT sekcie
-            let sectionHeader = null;
-            if (currentSection === 1) { // Robotníci
-              if (idx === 1) {
-                sectionHeader = (
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-4">
-                    <p className="text-blue-900 font-semibold">
-                      Nakoľko prijateľné sú pre vás nasledujúce argumenty v prospech konania dvoch pracovníkov?
-                    </p>
-                  </div>
-                );
-              } else if (idx === 7) {
-                sectionHeader = (
-                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-4">
-                    <p className="text-red-900 font-semibold">
-                      Nakoľko prijateľné sú pre vás nasledujúce argumenty v neprospech konania dvoch pracovníkov?
-                    </p>
-                  </div>
-                );
-              }
-            } else if (currentSection === 2) { // Lekár
-              if (idx === 1) {
-                sectionHeader = (
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-4">
-                    <p className="text-blue-900 font-semibold">
-                      Nakoľko prijateľné sú pre vás nasledujúce argumenty v prospech konania lekára?
-                    </p>
-                  </div>
-                );
-              } else if (idx === 7) {
-                sectionHeader = (
-                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-4">
-                    <p className="text-red-900 font-semibold">
-                      Nakoľko prijateľné sú pre vás nasledujúce argumenty v neprospech konania lekára?
-                    </p>
-                  </div>
-                );
-              }
-            }
-
-            return (
-              <div key={idx}>
-                {sectionHeader}
-                <div className="bg-white p-5 rounded-lg shadow-md border border-gray-200">
-                  <div className="mb-3">
-                    <span className="text-sm font-semibold text-gray-500">Otázka {idx + 1}</span>
-                    {currentSection === 4 && <p className="text-gray-700 mt-2">Som niekto, kto {q}</p>}
-                    {currentSection !== 4 && <p className="text-gray-700 mt-2">{q}</p>}
-                  </div>
-                  {renderScale(currentSection, idx, type)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const renderResults = () => {
-    const results = calculateResults();
-
-    // Funkcia na stiahnutie všetkých dát ako CSV
-    const downloadCSV = () => {
-      const data = localStorage.getItem('questionnaire_data');
-      if (!data) {
-        alert('Žiadne dáta na stiahnutie');
-        return;
-      }
-
-      const allData = JSON.parse(data);
-      
-      // Vytvorenie CSV hlavičky
-      const headers = [
-        'Timestamp',
-        'Vek',
-        'Pohlavie',
-        'Vzdelanie',
-        'Sociálny status',
-        'Partnerský stav',
-        'Veriaci',
-        'Morálne uvažovanie (C-skóre)',
-        'Morálna motivácia',
-        'Morálne konanie',
-        'Odolnosť',
-        'Emocionálna stabilita (invertované skóre)',
-        'Negatívna emocionalita (pôvodné skóre)'
-      ];
-
-      // Vytvorenie CSV riadkov
-      const rows = allData.map(item => [
-        item.timestamp,
-        item.demographics.age,
-        item.demographics.gender,
-        item.demographics.education,
-        item.demographics.socialStatus,
-        item.demographics.relationship,
-        item.demographics.religious,
-        item.results.mjtCScore,
-        item.results.moralSelf.toFixed(2),
-        item.results.moralIntegrity.toFixed(2),
-        item.results.resilience,
-        (5 - item.results.negativeEmotionality).toFixed(2),
-        item.results.negativeEmotionality.toFixed(2)
-      ]);
-
-      // Spojenie do CSV formátu
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.join(','))
-      ].join('\n');
-
-      // Stiahnutie súboru
-      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `questionnaire_data_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-    };
-
-    // Funkcia na stiahnutie všetkých dát ako JSON (s detailmi)
-    const downloadJSON = () => {
-      const data = localStorage.getItem('questionnaire_data');
-      if (!data) {
-        alert('Žiadne dáta na stiahnutie');
-        return;
-      }
-
-      const blob = new Blob([data], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `questionnaire_data_detailed_${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-    };
-
-    // Funkcia na vymazanie všetkých dát
-    const clearAllData = () => {
-      if (window.confirm('Naozaj chcete vymazať všetky uložené dáta? Túto akciu nie je možné vrátiť späť.')) {
-        localStorage.removeItem('questionnaire_data');
-        alert('Všetky dáta boli vymazané.');
-      }
-    };
-
-    return (
-      <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto px-2 sm:px-4">
-        <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-4 sm:p-6 rounded-lg">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
-            <h2 className="text-xl sm:text-2xl font-bold">Vaše výsledky</h2>
-          </div>
-          {dataSaved && (
-            <p className="text-sm mt-2 opacity-90">✓ Dáta boli úspešne uložené</p>
-          )}
-        </div>
-
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-          <h3 className="text-lg sm:text-xl font-bold text-green-900 mb-3 sm:mb-4">1. Morálne uvažovanie (MJT)</h3>
-          
-          {/* Vysvetlivka */}
-          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <p className="text-sm text-blue-900">
-              <strong>Morálne uvažovanie</strong> je schopnosť posúdiť, ktorý čin je morálne správny či nesprávny.
-            </p>
-          </div>
-          
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="font-semibold">C-skóre</span>
-              <span className="text-green-600 font-bold">{results.mjtCScore} / 100</span>
-            </div>
-            
-            {/* Kategorizácia C-skóre */}
-            <div className="mt-4 p-4 rounded-lg" style={{
-              backgroundColor: 
-                results.mjtCScore < 10 ? '#7f1d1d' : 
-                results.mjtCScore < 20 ? '#ef4444' :
-                results.mjtCScore < 30 ? '#f97316' : 
-                results.mjtCScore < 40 ? '#eab308' :
-                results.mjtCScore < 50 ? '#84cc16' :
-                '#22c55e'
-            }}>
-              <p className="font-semibold text-white">
-                Úroveň morálneho uvažovania: {
-                  results.mjtCScore < 10 ? 'Veľmi nízka' : 
-                  results.mjtCScore < 20 ? 'Nízka' :
-                  results.mjtCScore < 30 ? 'Stredná' : 
-                  results.mjtCScore < 40 ? 'Vysoká' :
-                  results.mjtCScore < 50 ? 'Veľmi vysoká' :
-                  'Mimoriadne vysoká'
-                }
-              </p>
-              <p className="text-sm mt-2 text-white">
-                {results.mjtCScore < 10 && 
-                  'Rozhodovanie môže byť silne ovplyvnené osobnými preferenciami namiesto morálnych princípov.'
-                }
-                {results.mjtCScore >= 10 && results.mjtCScore < 20 && 
-                  'Pri morálnom uvažovaní môžete mať tendenciu uprednostňovať vlastné názory pred objektívnymi morálnymi princípmi.'
-                }
-                {results.mjtCScore >= 20 && results.mjtCScore < 30 && 
-                  'Čiastočne dokážete rozpoznávať kvalitu morálnych argumentov nezávisle od vlastného stanoviska.'
-                }
-                {results.mjtCScore >= 30 && results.mjtCScore < 40 && 
-                  'Dokážete dobre rozlišovať medzi kvalitnejšími a menej kvalitnými morálnymi argumentmi.'
-                }
-                {results.mjtCScore >= 40 && results.mjtCScore < 50 && 
-                  'Vykazujete silnú schopnosť objektívne hodnotiť morálne argumenty nezávisle od vlastných názorov.'
-                }
-                {results.mjtCScore >= 50 && 
-                  'Prejavujete výnimočnú schopnosť konzistentne rozpoznávať a hodnotiť kvalitu morálnych argumentov na základe ich princípov.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-          <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-3 sm:mb-4">2. Morálna motivácia</h3>
-          
-          {/* Vysvetlivka */}
-          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <p className="text-sm text-blue-900">
-              <strong>Morálna motivácia</strong> je odhodlanie konať na základe toho čo je podľa morálneho uvažovania správne, teda uprednostňovať morálnu hodnotu pred všetkými ostatnými.
-            </p>
-          </div>
-          
-          <div className="mb-4 p-3 bg-amber-50 border-l-4 border-amber-500 rounded">
-            <p className="text-sm text-amber-900">
-              <strong>Poznámka:</strong> Úrovne sú orientačné, založené na normách z americkej populácie (Black & Reynolds, 2016).
-            </p>
-          </div>
-          
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="font-semibold">Skóre</span>
-              <span className="text-blue-600 font-bold">{results.moralSelf} / 6.00</span>
-            </div>
-            
-            {/* Kategorizácia podľa autorov (M = 40.66, SD = 4.30 pre súčet) -> pre priemer M = 5.08, SD = 0.54 */}
-            <div className="mt-4 p-4 rounded-lg" style={{
-              backgroundColor: 
-                results.moralSelf < 4.01 ? '#ef4444' : 
-                results.moralSelf < 4.54 ? '#ef4444' :
-                results.moralSelf <= 5.62 ? '#eab308' : 
-                results.moralSelf <= 6.16 ? '#84cc16' :
-                '#22c55e'
-            }}>
-              <p className="font-semibold text-white">
-                Úroveň morálnej motivácie: {
-                  results.moralSelf < 4.01 ? 'Veľmi nízka' : 
-                  results.moralSelf < 4.54 ? 'Nízka' :
-                  results.moralSelf <= 5.62 ? 'Priemerná' : 
-                  results.moralSelf <= 6.16 ? 'Vysoká' :
-                  'Veľmi vysoká'
-                }
-              </p>
-              <p className="text-sm mt-2 text-white">
-                {results.moralSelf < 4.01 && 
-                  'Morálne hodnoty nemusia byť pre vás ústrednou súčasťou vašej identity.'
-                }
-                {results.moralSelf >= 4.01 && results.moralSelf < 4.54 && 
-                  'Morálne hodnoty môžu byť pre vás menej významné v porovnaní s ostatnými.'
-                }
-                {results.moralSelf >= 4.54 && results.moralSelf <= 5.62 && 
-                  'Morálne hodnoty majú pre vás bežný význam pri definovaní vašej identity.'
-                }
-                {results.moralSelf > 5.62 && results.moralSelf <= 6.16 && 
-                  'Morálne hodnoty sú pre vás dôležitou súčasťou vašej identity.'
-                }
-                {results.moralSelf > 6.16 && 
-                  'Morálne hodnoty sú ústredným prvkom vašej identity a sebadefinície.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-          <h3 className="text-lg sm:text-xl font-bold text-purple-900 mb-3 sm:mb-4">3. Morálne konanie</h3>
-          
-          {/* Vysvetlivka */}
-          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <p className="text-sm text-blue-900">
-              <strong>Morálne konanie</strong> je implementácia morálneho činu, vyznačuje sa odvahou, vytrvalosťou, prekonávaním rozptýlenia a uplatňovaním zručností.
-            </p>
-          </div>
-          
-          <div className="mb-4 p-3 bg-amber-50 border-l-4 border-amber-500 rounded">
-            <p className="text-sm text-amber-900">
-              <strong>Poznámka:</strong> Úrovne sú orientačné, založené na normách z americkej populácie (Black & Reynolds, 2016).
-            </p>
-          </div>
-          
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="font-semibold">Skóre</span>
-              <span className="text-purple-600 font-bold">{results.moralIntegrity} / 6.00</span>
-            </div>
-            
-            {/* Kategorizácia podľa autorov (M = 58.75, SD = 8.71 pre súčet) -> pre priemer M = 4.90, SD = 0.73 */}
-            <div className="mt-4 p-4 rounded-lg" style={{
-              backgroundColor: 
-                results.moralIntegrity < 3.44 ? '#ef4444' : 
-                results.moralIntegrity < 4.17 ? '#f97316' :
-                results.moralIntegrity <= 5.63 ? '#eab308' : 
-                results.moralIntegrity <= 6.36 ? '#84cc16' :
-                '#22c55e'
-            }}>
-              <p className="font-semibold text-white">
-                Úroveň morálneho konania: {
-                  results.moralIntegrity < 3.44 ? 'Veľmi nízka' : 
-                  results.moralIntegrity < 4.17 ? 'Nízka' :
-                  results.moralIntegrity <= 5.63 ? 'Priemerná' : 
-                  results.moralIntegrity <= 6.36 ? 'Vysoká' :
-                  'Veľmi vysoká'
-                }
-              </p>
-              <p className="text-sm mt-2 text-white">
-                {results.moralIntegrity < 3.44 && 
-                  'Pri implementácii morálnych činov môžete čeliť väčším ťažkostiam s odvahou, vytrvalosťou alebo prekonávaním prekážok.'
-                }
-                {results.moralIntegrity >= 3.44 && results.moralIntegrity < 4.17 && 
-                  'Občas môžete mať problém pretaviť morálne úmysly do konkrétneho konania, najmä pri náročnejších situáciách.'
-                }
-                {results.moralIntegrity >= 4.17 && results.moralIntegrity <= 5.63 && 
-                  'Prejavujete primeranú schopnosť realizovať morálne činy s dostatočnou odvahou a vytrvalosťou.'
-                }
-                {results.moralIntegrity > 5.63 && results.moralIntegrity <= 6.36 && 
-                  'Vyznačujete sa silnou schopnosťou implementovať morálne činy aj napriek rozptýleniu či prekážkam.'
-                }
-                {results.moralIntegrity > 6.36 && 
-                  'Prejavujete výnimočnú odvahu a vytrvalosť pri realizácii morálnych činov aj v náročných situáciách.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-          <h3 className="text-lg sm:text-xl font-bold text-orange-900 mb-3 sm:mb-4">4. Odolnosť (CD-RISC-10)</h3>
-          
-          {/* Vysvetlivka */}
-          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <p className="text-sm text-blue-900">
-              <strong>Odolnosť</strong> je schopnosť psychicky a emocionálne sa prispôsobiť, zotaviť sa a úspešne zvládnuť náročné životné situácie, stres, traumy, krízy a neúspechy, pričom si zachováme duševnú rovnováhu a dokážeme ďalej fungovať a rásť.
-            </p>
-          </div>
-          
-          {/* Disclaimer */}
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Poznámka:</strong> Úrovne sú orientačné, založené na normách z americkej študentskej populácie (Campbell-Sills & Stein, 2007).
-            </p>
-          </div>
-
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="font-semibold">Skóre</span>
-              <span className="text-orange-600 font-bold">{results.resilience} / 40</span>
-            </div>
-            
-            {/* Kategorizácia podľa autorov (M = 27.21, SD = 5.84) */}
-            <div className="mt-4 p-4 rounded-lg" style={{
-              backgroundColor: 
-                results.resilience < 21.37 ? '#ef4444' : 
-                results.resilience <= 33.05 ? '#eab308' : 
-                '#22c55e'
-            }}>
-              <p className="font-semibold text-white">
-                Úroveň resiliencie: {
-                  results.resilience < 21.37 ? 'Nízka' : 
-                  results.resilience <= 33.05 ? 'Priemerná' : 
-                  'Vysoká'
-                }
-              </p>
-              <p className="text-sm mt-2 text-white">
-                {results.resilience < 21.37 && 
-                  'Môže to naznačovať nižšiu schopnosť zvládať náročné životné situácie, stres či neúspechy.'
-                }
-                {results.resilience >= 21.37 && results.resilience <= 33.05 && 
-                  'Disponujete bežnou úrovňou resiliencie pri zvládaní životných výziev.'
-                }
-                {results.resilience > 33.05 && 
-                  'Vykazujete silnú schopnosť zvládať náročné životné situácie, stres, traumy, krízy a neúspechy.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-          <h3 className="text-lg sm:text-xl font-bold text-teal-900 mb-3 sm:mb-4">5. Emocionálna stabilita (BFI-2)</h3>
-          
-          {/* Vysvetlivka */}
-          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <p className="text-sm text-blue-900">
-              <strong>Emocionálna stabilita</strong> je schopnosť udržiavať psychickú rovnováhu, nenechať sa ľahko vyviesť z miery a reagovať primerane na stres a životné výzvy, prejavuje sa rozvážnosťou, pozitívnym naladením a odolnosťou voči úzkosti, výkyvom nálad a impulzívnemu správaniu.
-            </p>
-          </div>
-          
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="font-semibold">Skóre emocionálnej stability</span>
-              <span className="text-teal-600 font-bold">{(5 - results.negativeEmotionality).toFixed(2)} / 5.00</span>
-            </div>
-            
-            {/* Kategorizácia - používame NE hodnoty, ale zobrazujeme ako stabilitu */}
-            <div className="mt-4 p-4 rounded-lg" style={{
-              backgroundColor: 
-                results.negativeEmotionality < 2.15 ? '#22c55e' : 
-                results.negativeEmotionality <= 3.59 ? '#eab308' : 
-                '#ef4444'
-            }}>
-              <p className="font-semibold text-white">
-                {results.negativeEmotionality < 2.15 && 'Vysoká emocionálna stabilita'}
-                {results.negativeEmotionality >= 2.15 && results.negativeEmotionality <= 3.59 && 'Priemerná emocionálna stabilita'}
-                {results.negativeEmotionality > 3.59 && 'Nízka emocionálna stabilita'}
-              </p>
-              <p className="text-sm mt-2 text-white">
-                {results.negativeEmotionality < 2.15 && 
-                  'Vykazujete nízku úroveň úzkosti, depresie a emočnej volatility. Ste emocionálne stabilný/á a dobre zvládate stres.'
-                }
-                {results.negativeEmotionality >= 2.15 && results.negativeEmotionality <= 3.59 && 
-                  'Disponujete bežnou úrovňou emocionálnej stability s občasnými výkyvmi nálady a reakciami na stres.'
-                }
-                {results.negativeEmotionality > 3.59 && 
-                  'Môže to naznačovať vyššiu úroveň úzkosti, depresie a emočnej volatility. Odporúčame zvážiť techniky zvládania úzkosti alebo konzultáciu s odborníkom.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={() => { setShowResults(false); setCurrentSection(0); setResponses({}); }}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold"
-        >
-          Začať znova
-        </button>
-
-        {/* Admin tlačidlá na správu dát - skryté, zobrazujú sa po kliknutí na špeciálnu kombináciu */}
-        <div className="mt-12 pt-8 border-t-2 border-gray-300">
-          <details className="bg-gray-100 rounded-lg p-4">
-            <summary className="cursor-pointer font-semibold text-gray-700 hover:text-gray-900">
-              🔧 Správa výskumných dát (iba pre výskumníka)
-            </summary>
-            
-            <div className="mt-4 space-y-3">
-              <p className="text-sm text-gray-600 mb-4">
-                Celkový počet respondentov: <strong>{(() => {
-                  const data = localStorage.getItem('questionnaire_data');
-                  return data ? JSON.parse(data).length : 0;
-                })()}</strong>
-              </p>
-              
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={downloadCSV}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold"
-                >
-                  📊 Stiahnuť dáta (CSV)
-                </button>
-                
-                <button
-                  onClick={downloadJSON}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
-                >
-                  📄 Stiahnuť dáta (JSON - detailné)
-                </button>
-                
-                <button
-                  onClick={clearAllData}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
-                >
-                  🗑️ Vymazať všetky dáta
-                </button>
-              </div>
-              
-              <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                <p className="text-sm text-yellow-800">
-                  <strong>Poznámka:</strong> Dáta sú uložené lokálne v prehliadači. Nezabudnite ich pravidelne stiahnuť a zálohovať.
-                </p>
-              </div>
-            </div>
-          </details>
-        </div>
-      </div>
-    );
-  };
-
-  const canProceed = () => {
-    const section = sections[currentSection];
-    const answered = section.questions.filter((_, idx) => 
-      responses[`${currentSection}-${idx}`] !== undefined
-    ).length;
-    return answered === section.questions.length;
-  };
-
-  if (showResults) {
-    return <div className="min-h-screen bg-gray-50 p-2 sm:p-6">{renderResults()}</div>;
-  }
-
-  // Úvodná stránka s informovaným súhlasom
-  if (showIntro) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-              Dotazník morálneho správania, odolnosti a emocionálnej stability
-            </h1>
-            
-            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed">
-              <p className="mb-4">
-                Ahojte! Volám sa Claudia Bartová, som študentkou 2. ročníka magisterskeho stupňa psychológie a v rámci mojej diplomovej práce sa zaoberám súvislosťami medzi morálnym správaním, odolnosťou a emocionálnou stabilitou.
-              </p>
-              
-              <p className="mb-4">
-                Účasť vo výskume je určená pre respondentov <strong>vo veku nad 18 rokov</strong> a svojou účasťou dobrovoľne dávate informovaný súhlas na spracovanie dát. Približný čas vyplnenia dotazníku je <strong>10-15 minút</strong> a po jeho vyplnení sa Vám na záver <strong>zobrazí aj vyhodnotenie Vašich schopností</strong>, ktoré tento dotazník meria.
-              </p>
-              
-              <p className="mb-4">
-                Všetky <strong>vaše odpovede sú anonymné</strong> a ukončenie vypĺňania dotazníka je možné kedykoľvek. Odpovedajte prosím pravdivo, žiadna z odpovedí nie je nesprávna.
-              </p>
-              
-              <p className="mb-6">
-                V prípade akýchkoľvek otázok ma môžete kontaktovať na e-mailovej adrese <a href="mailto:claudiabartova@gmail.com" className="text-blue-600 hover:underline">claudiabartova@gmail.com</a>.
-              </p>
-              
-              <p className="font-semibold text-gray-800">
-                Ďakujem za zapojenie sa do výskumu a pomoc pri mojej diplomovej práci.
-              </p>
-            </div>
-            
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="consent"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                  className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="consent" className="text-gray-800 font-medium cursor-pointer">
-                  Súhlasím s anonymným spracovaním dát dotazníka pre účely výskumu.
-                </label>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => {
-                setShowIntro(false);
-                setShowDemographics(true);
-              }}
-              disabled={!consent}
-              className={`w-full py-4 rounded-lg font-semibold text-lg transition-all ${
-                consent 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg' 
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {consent ? 'Pokračovať' : 'Prosím, potvrďte súhlas'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Stránka demografických údajov
-  if (showDemographics) {
-    const canProceedDemo = () => {
-      return demographics.age && 
-             demographics.gender && 
-             demographics.education && 
-             demographics.relationship && 
-             demographics.socialStatus &&
-             demographics.religious;
-    };
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-              Demografické údaje
-            </h1>
-            <p className="text-gray-600 text-center mb-8">
-              V tejto časti, prosím vyplňte údaje o Vás.
-            </p>
-            
-            <div className="space-y-6">
-              {/* Vek */}
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  1. Aký je Váš vek? (uvádzajte číslom)
-                </label>
-                <input
-                  type="number"
-                  min="18"
-                  max="120"
-                  value={demographics.age}
-                  onChange={(e) => setDemographics({...demographics, age: e.target.value})}
-                  placeholder="Napríklad: 25"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Pohlavie */}
-              <div>
-                <label className="block text-gray-700 font-semibold mb-3">
-                  2. Aké je Vaše pohlavie?
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="muž"
-                      checked={demographics.gender === 'muž'}
-                      onChange={(e) => setDemographics({...demographics, gender: e.target.value})}
-                      className="w-5 h-5 text-blue-600"
-                    />
-                    <span className="ml-3 text-gray-700">Muž</span>
-                  </label>
-                  <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="žena"
-                      checked={demographics.gender === 'žena'}
-                      onChange={(e) => setDemographics({...demographics, gender: e.target.value})}
-                      className="w-5 h-5 text-blue-600"
-                    />
-                    <span className="ml-3 text-gray-700">Žena</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Vzdelanie */}
-              <div>
-                <label className="block text-gray-700 font-semibold mb-3">
-                  3. Aké je Vaše najvyššie dosiahnuté vzdelanie?
-                </label>
-                <div className="space-y-2">
-                  {[
-                    'Základné vzdelanie',
-                    'Stredoškolské vzdelanie bez maturity',
-                    'Stredoškolské vzdelanie s maturitou',
-                    'Vysokoškolské vzdelanie I. stupňa',
-                    'Vysokoškolské vzdelanie II. stupňa',
-                    'Vysokoškolské vzdelanie III. stupňa'
-                  ].map((option) => (
-                    <label key={option} className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                      <input
-                        type="radio"
-                        name="education"
-                        value={option}
-                        checked={demographics.education === option}
-                        onChange={(e) => setDemographics({...demographics, education: e.target.value})}
-                        className="w-5 h-5 text-blue-600"
-                      />
-                      <span className="ml-3 text-gray-700">{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sociálny status */}
-              <div>
-                <label className="block text-gray-700 font-semibold mb-3">
-                  4. Aký je Váš sociálny status?
-                </label>
-                <div className="space-y-2">
-                  {[
-                    'Študent/ka',
-                    'Zamestnaný/á',
-                    'Nezamestnaný/á',
-                    'Na materskej/rodičovskej dovolenke'
-                  ].map((option) => (
-                    <label key={option} className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                      <input
-                        type="radio"
-                        name="socialStatus"
-                        value={option}
-                        checked={demographics.socialStatus === option}
-                        onChange={(e) => setDemographics({...demographics, socialStatus: e.target.value})}
-                        className="w-5 h-5 text-blue-600"
-                      />
-                      <span className="ml-3 text-gray-700">{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Partnerský stav */}
-              <div>
-                <label className="block text-gray-700 font-semibold mb-3">
-                  5. Aký je Váš partnerský stav?
-                </label>
-                <div className="space-y-2">
-                  {[
-                    'Slobodný/á',
-                    'V partnerskom vzťahu',
-                    'Ženatý/vydatá',
-                    'Rozvedený/á',
-                    'Vdovec/vdova'
-                  ].map((option) => (
-                    <label key={option} className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                      <input
-                        type="radio"
-                        name="relationship"
-                        value={option}
-                        checked={demographics.relationship === option}
-                        onChange={(e) => setDemographics({...demographics, relationship: e.target.value})}
-                        className="w-5 h-5 text-blue-600"
-                      />
-                      <span className="ml-3 text-gray-700">{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Viera */}
-              <div>
-                <label className="block text-gray-700 font-semibold mb-3">
-                  6. Ste veriaci?
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="religious"
-                      value="áno"
-                      checked={demographics.religious === 'áno'}
-                      onChange={(e) => setDemographics({...demographics, religious: e.target.value})}
-                      className="w-5 h-5 text-blue-600"
-                    />
-                    <span className="ml-3 text-gray-700">Áno</span>
-                  </label>
-                  <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="religious"
-                      value="nie"
-                      checked={demographics.religious === 'nie'}
-                      onChange={(e) => setDemographics({...demographics, religious: e.target.value})}
-                      className="w-5 h-5 text-blue-600"
-                    />
-                    <span className="ml-3 text-gray-700">Nie</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 flex gap-4">
-              <button
-                onClick={() => {
-                  setShowDemographics(false);
-                  setShowIntro(true);
-                }}
-                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold"
-              >
-                Späť
-              </button>
-              
-              <button
-                onClick={() => setShowDemographics(false)}
-                disabled={!canProceedDemo()}
-                className={`flex-1 py-3 rounded-lg font-semibold text-lg transition-all ${
-                  canProceedDemo()
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {canProceedDemo() ? 'Začať dotazník' : 'Prosím, vyplňte všetky údaje'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 px-2">Dotazník morálneho správania, odolnosti a emocionálnej stability</h1>
-        </div>
-
-        {renderSection()}
-
-        <div className="flex gap-2 sm:gap-4 mt-6 sm:mt-8">
-          {currentSection > 0 && (
-            <button
-              onClick={() => setCurrentSection(currentSection - 1)}
-              className="flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm sm:text-base"
-            >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-              Späť
-            </button>
-          )}
-          
-          {currentSection < sections.length - 1 && (
-            <button
-              onClick={() => setCurrentSection(currentSection + 1)}
-              disabled={!canProceed()}
-              className={`flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-3 rounded-lg ml-auto text-sm sm:text-base ${
-                canProceed() ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              Ďalej
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          )}
-          
-          {currentSection === sections.length - 1 && (
-            <button
-              onClick={() => setShowResults(true)}
-              disabled={!canProceed()}
-              className={`flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-3 rounded-lg ml-auto text-sm sm:text-base ${
-                canProceed() ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
-              Zobraziť výsledky
-            </button>
-          )}
-        </div>
-
-        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-500">
-          {canProceed() ? (
-            <span className="text-green-600 font-semibold">✓ Všetky otázky zodpovedané</span>
-          ) : (
-            <span>Prosím zodpovedajte všetky otázky pred pokračovaním</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(ComprehensiveQuestionnaire));
+        // Prvé vykreslenie
+        render();
     </script>
 </body>
 </html>
+    <div id="app"></div>
